@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <% include ./partials/header.ejs %>
+    <title>Document</title>
+</head>
+
+<body>
+  <% include ./partials/navbar.ejs %>
+
+
+  <div id="carouselExampleIndicators" class="carousel slide">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active"
+        aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1"
+        aria-label="Slide 2"></button>
+      <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2"
+        aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+      <div class="carousel-item active">
+        <img src="https://source.unsplash.com/wHsOV75Xi8Y" class="d-block w-100" alt="...">
+      </div>
+      <div class="carousel-item">
+        <img src="https://source.unsplash.com/LR559Dcst70" class="d-block w-100" alt="...">
+      </div>
+      <div class="carousel-item">
+        <img src="https://source.unsplash.com/jPaguWdUuUY" class="d-block w-100" alt="...">
+      </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators"
+      data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators"
+      data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+
+  <!-- photo carousel ends -->
+  <!-- small description start -->
+  <div class="container-fluid ">
+    <h5 class="pt-2">NIT Momo Shop</h5>
+    <div class="tags">
+      <div class="tag">cheap</div>
+      <div class="tag">area</div>
+      <div class="tag">best</div>
+      <div class="tag">sitting</div>
+      <div class="tag">crowdy</div>
+  </div>
+  </div>
+
+  <!-- small description ends -->
+  <!-- main slider section starts -->
+
+  <div class="btn-group container-fluid my-2" role="group" aria-label="Basic radio toggle button group">
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+    <label class="btn btn-outline-primary rounded-start-pill" for="btnradio1">Info</label>
+
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+    <label class="btn btn-outline-primary border-start-0 border-end-0" for="btnradio2">Menu</label>
+
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off">
+    <label class="btn btn-outline-primary rounded-end-pill" for="btnradio3">Map</label>
+  </div>
+
+  <!-- main slider section ends -->
+  <div class="container">
+    <div class="card">
+      <div class="card-body">
+        <div>
+          <h5 class="card-title">Top recommendations</h5>
+          <ul class="list-group">
+            <li class="list-group-item">1. Crispy Momo</li>
+            <li class="list-group-item">2. Chilli Momo</li>
+            <li class="list-group-item">3. Chicken Fried Momo</li>
+          </ul>
+        </div>
+
+       
+
+      </div>
+    </div>
+  </div>
+
+
+
+  <% include ./partials/footer.ejs %>
+</body>
+</html>

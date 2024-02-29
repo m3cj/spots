@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <% include ./partials/header.ejs %>
+  <link rel="stylesheet" href="">
+    <title>Document</title>
+</head>
+
+<body>
+  <% include ./partials/navbar.ejs %>
+    <!-- search bar starts -->
+
+  <div class="container input-group my-1">
+    <input type="text" id="inputText" class="form-control" placeholder="search category..."
+        aria-label="search with two button addons" onkeyup ="searchFuncCat()">
+    <button class="btn btn-outline-secondary" type="button">Search</button>
+    <button class="btn btn-outline-secondary" type="button">Filter</button>
+</div>
+<!-- search bar ends -->
+
+
+<!-- main category section starts-->
+<div class="container-fluid" id="mainList">
+    <div class="card">
+        <img src="https://source.unsplash.com/Vj-J5xNjnxA" class="card-img-top" id="catCard" alt="...">
+        <div class="card-body">
+            <h1 class="fw-bold">Momo</h1>
+            <a href="./rankingList.html" class="card-link">see more</a>
+        </div>
+        <ul class="list-group list-group-flush">
+            <a href="#">
+                <li class="list-group-item">A list item</li>
+            </a>
+            <a href="#">
+                <li class="list-group-item">A list item</li>
+            </a>
+            <a href="#">
+                <li class="list-group-item">A list item</li>
+            </a>
+        </ul>
+    </div>
+    <div class="card">
+        <img src="https://source.unsplash.com/sykNIc7aIdU" class="card-img-top" id="catCard" alt="...">
+        <div class="card-body">
+            <h1 class="fw-bold">Noodles</h1>
+            <a href="./rankingList.html" class="card-link">see more</a>
+        </div>
+        <ul class="list-group list-group-flush">
+            <a href="#">
+                <li class="list-group-item">A list item</li>
+            </a>
+            <a href="#">
+                <li class="list-group-item">A list item</li>
+            </a>
+            <a href="#">
+                <li class="list-group-item">A list item</li>
+            </a>
+        </ul>
+    </div>
+</div>
+
+  <% include ./partials/footer.ejs %>
+</body>
+</html>

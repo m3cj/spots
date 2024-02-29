@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <% include ./partials/header.ejs %>
+    <title>Document</title>
+</head>
+
+<body>
+    <% include ./partials/navbar.ejs %>
+    <form id="uploadform" hidden action="/fileupload" method="post" enctype="multipart/form-data">
+        <input type="file" name="image">
+    </form>
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-img rounded">
+                <% if (user && user.profileImage) { %>
+                    <img src="./images/uploads/<%= user.profileImage %>" alt="profile pic">
+                <% } else { %>
+                    <img src="./images/defaultProfilePic.svg" alt="default profile pic">
+                <% } %>
+            </div>
+            <h1 class="card-title"><%= user ? "@" + user.username : "Guest" %></h1>
+            <div id="uploadbtn" class="card-body">
+                <button>Edit</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.querySelector("#uploadbtn").addEventListener('click', function (event) {
+            event.preventDefault(); // Prevent default form submission behavior
+            document.querySelector('#uploadform input').click();
+        });
+
+        document.querySelector('#uploadform input').addEventListener('change', function () {
+            document.querySelector('#uploadform').submit();
+        })
+    </script>
+
+    <% include ./partials/footer.ejs %>
+
+</body>
+
+</html>
