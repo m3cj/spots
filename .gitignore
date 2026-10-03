@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel/
+
+# Secrets — never commit. `env` (no dot) is the local scratch file holding the Maps key.
+env
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
