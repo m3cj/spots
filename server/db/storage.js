@@ -5,7 +5,7 @@ import { supabase } from './supabase.js';
 import { unwrap } from './helpers.js';
 
 const bucket = config.supabase.bucket;
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 15 * 1024 * 1024;
 
 let bucketReady = null;
 
@@ -30,21 +30,37 @@ function ensureBucket() {
 
 export const publicUrl = (path) => supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 
-/** Stores a processed WebP under folder/ and resolves to { path, url }. */
-export async function uploadImage(buffer, folder) {
+export const thumbUrl = (url) => (url ? url.replace(/\.webp$/, '_thumb.webp') : null);
+
+/** Stores a processed WebP under folder/ and optionally its thumbnail; resolves to { path, url, thumbUrl }. */
+export async function uploadImage(buffer, folder, thumbBuffer = null) {
   await ensureBucket();
 
-  const path = `${folder}/${randomUUID()}.webp`;
+  const id = randomUUID();
+  const path = `${folder}/${id}.webp`;
   const { error } = await supabase.storage
     .from(bucket)
     .upload(path, buffer, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
   if (error) throw new HttpError(502, 'Could not store the image.', { code: 'STORAGE_ERROR', cause: error });
 
-  return { path, url: publicUrl(path) };
+  if (thumbBuffer) {
+    const thumbPath = `${folder}/${id}_thumb.webp`;
+    await supabase.storage
+      .from(bucket)
+      .upload(thumbPath, thumbBuffer, { contentType: 'image/webp', cacheControl: '31536000', upsert: false })
+      .catch((err) => console.warn('[storage] thumbnail upload failed:', err.message));
+  }
+
+  const url = publicUrl(path);
+  return { path, url, thumbUrl: thumbUrl(url) };
 }
 
 export async function removeObject(path) {
-  const { error } = await supabase.storage.from(bucket).remove([path]);
+  const paths = [path];
+  if (path.endsWith('.webp') && !path.endsWith('_thumb.webp')) {
+    paths.push(path.replace(/\.webp$/, '_thumb.webp'));
+  }
+  const { error } = await supabase.storage.from(bucket).remove(paths);
   if (error) throw new HttpError(502, 'Could not remove the image.', { code: 'STORAGE_ERROR', cause: error });
 }
 

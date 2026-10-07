@@ -1,11 +1,29 @@
 import { supabase } from './supabase.js';
 import { escapeLike, pageOf, rangeFor, unwrap } from './helpers.js';
+import { getSchemaCapabilities } from './schemaCompat.js';
 
-// created_by and search_text stay server-side on public responses.
-export const SPOT_COLUMNS =
+const BASE_SPOT_COLUMNS =
   'id,name,category_slug,status,hero_img,lat,lng,gmap_link,description,direction,tags,best_time_to_visit,street,area,pincode,state,like_count,views,contacts,created_at,updated_at';
-const ADMIN_SPOT_COLUMNS = `${SPOT_COLUMNS},created_by`;
+const FULL_SPOT_COLUMNS =
+  'id,name,category_slug,status,hero_img,lat,lng,gmap_link,description,direction,tags,best_time_to_visit,street,landmark,area,city,pincode,state,like_count,views,contacts,created_at,updated_at';
+
+export const SPOT_COLUMNS = FULL_SPOT_COLUMNS;
 const GALLERY = 'spot_images(id,image_url,caption,sort_order)';
+
+async function getSpotColumns(includeAdmin = false) {
+  const caps = await getSchemaCapabilities();
+  const base = caps.spotsHasCityLandmark ? FULL_SPOT_COLUMNS : BASE_SPOT_COLUMNS;
+  return includeAdmin ? `${base},created_by` : base;
+}
+
+function hydrateSpot(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    city: row.city ?? 'Patna',
+    landmark: row.landmark ?? null,
+  };
+}
 
 // Every word must appear somewhere in name, area, street, description, tags or category (spots.search_text).
 function applySearch(query, q) {
@@ -18,10 +36,13 @@ function applySearch(query, q) {
 // --- public ----------------------------------------------------------------
 
 export async function listSpots(params) {
-  const { q, category, area, pincode, time, sort } = params;
+  const caps = await getSchemaCapabilities();
+  const columns = await getSpotColumns(false);
+  const { q, category, city, area, pincode, time, sort } = params;
 
-  let query = supabase.from('spots').select(SPOT_COLUMNS, { count: 'exact' }).eq('status', 'active');
+  let query = supabase.from('spots').select(columns, { count: 'exact' }).eq('status', 'active');
   if (category) query = query.eq('category_slug', category);
+  if (city && caps.spotsHasCityLandmark) query = query.ilike('city', escapeLike(city));
   if (area) query = query.ilike('area', escapeLike(area));
   if (pincode) query = query.eq('pincode', pincode);
   // A spot that is good "anytime" is also good at any specific time.
@@ -33,20 +54,22 @@ export async function listSpots(params) {
 
   const { from, to } = rangeFor(params);
   const { data, count } = unwrap(await query.range(from, to));
-  return pageOf(data, count ?? data.length, params);
+  const hydrated = (data ?? []).map(hydrateSpot);
+  return pageOf(hydrated, count ?? hydrated.length, params);
 }
 
 export async function getSpotDetail(id) {
+  const columns = await getSpotColumns(false);
   const { data } = unwrap(
     await supabase
       .from('spots')
-      .select(`${SPOT_COLUMNS},${GALLERY}`)
+      .select(`${columns},${GALLERY}`)
       .eq('id', id)
       .eq('status', 'active')
       .order('sort_order', { referencedTable: 'spot_images' })
       .maybeSingle(),
   );
-  return data;
+  return hydrateSpot(data);
 }
 
 /** Counts a detail view. A failed counter must never fail the page, so errors are logged and swallowed. */
@@ -60,22 +83,40 @@ export async function bumpViews(id) {
 }
 
 export async function getHotSpots() {
+  const columns = await getSpotColumns(false);
   const { data } = unwrap(
     await supabase
       .from('spots')
-      .select(SPOT_COLUMNS)
+      .select(columns)
       .eq('status', 'active')
       .order('like_count', { ascending: false })
       .order('views', { ascending: false })
       .order('id')
       .limit(10),
   );
-  return data;
+  return (data ?? []).map(hydrateSpot);
 }
 
 export async function getSpotFacets() {
-  const { data } = unwrap(await supabase.rpc('spot_facets'));
-  return data;
+  try {
+    const { data } = unwrap(await supabase.rpc('spot_facets'));
+    if (data && Array.isArray(data.cities)) {
+      return data;
+    }
+    return {
+      cities: ['Patna'],
+      areas: data?.areas || [],
+      pincodes: data?.pincodes || [],
+      by_city: { Patna: { areas: data?.areas || [], pincodes: data?.pincodes || [] } },
+    };
+  } catch (err) {
+    return {
+      cities: ['Patna'],
+      areas: [],
+      pincodes: [],
+      by_city: { Patna: { areas: [], pincodes: [] } },
+    };
+  }
 }
 
 export async function getViewerState(userId, spotId) {
@@ -89,41 +130,60 @@ export async function getViewerState(userId, spotId) {
 // --- admin -----------------------------------------------------------------
 
 export async function adminListSpots(params) {
-  const { q, status, category, ownerId } = params;
+  const caps = await getSchemaCapabilities();
+  const columns = await getSpotColumns(true);
+  const { q, status, category, city, ownerId } = params;
 
-  let query = supabase.from('spots').select(ADMIN_SPOT_COLUMNS, { count: 'exact' });
+  let query = supabase.from('spots').select(columns, { count: 'exact' });
   if (status) query = query.eq('status', status);
   if (category) query = query.eq('category_slug', category);
+  if (city && caps.spotsHasCityLandmark) query = query.ilike('city', escapeLike(city));
   if (ownerId) query = query.eq('created_by', ownerId);
   query = applySearch(query, q).order('updated_at', { ascending: false }).order('id', { ascending: false });
 
   const { from, to } = rangeFor(params);
   const { data, count } = unwrap(await query.range(from, to));
-  return pageOf(data, count ?? data.length, params);
+  const hydrated = (data ?? []).map(hydrateSpot);
+  return pageOf(hydrated, count ?? hydrated.length, params);
 }
 
 export async function adminGetSpot(id) {
+  const columns = await getSpotColumns(true);
   const { data } = unwrap(
     await supabase
       .from('spots')
-      .select(`${ADMIN_SPOT_COLUMNS},${GALLERY}`)
+      .select(`${columns},${GALLERY}`)
       .eq('id', id)
       .order('sort_order', { referencedTable: 'spot_images' })
       .maybeSingle(),
   );
-  return data;
+  return hydrateSpot(data);
 }
 
 export async function adminCreateSpot(input) {
-  const { data } = unwrap(await supabase.from('spots').insert(input).select(ADMIN_SPOT_COLUMNS).single());
-  return data;
+  const caps = await getSchemaCapabilities();
+  const columns = await getSpotColumns(true);
+  const payload = { ...input };
+  if (!caps.spotsHasCityLandmark) {
+    delete payload.city;
+    delete payload.landmark;
+  }
+  const { data } = unwrap(await supabase.from('spots').insert(payload).select(columns).single());
+  return hydrateSpot(data);
 }
 
 export async function adminUpdateSpot(id, patch) {
+  const caps = await getSchemaCapabilities();
+  const columns = await getSpotColumns(true);
+  const payload = { ...patch };
+  if (!caps.spotsHasCityLandmark) {
+    delete payload.city;
+    delete payload.landmark;
+  }
   const { data } = unwrap(
-    await supabase.from('spots').update(patch).eq('id', id).select(ADMIN_SPOT_COLUMNS).maybeSingle(),
+    await supabase.from('spots').update(payload).eq('id', id).select(columns).maybeSingle(),
   );
-  return data;
+  return hydrateSpot(data);
 }
 
 /** Rejects with IN_USE while events still point at the spot. */
@@ -142,4 +202,13 @@ export async function replaceSpotImages(spotId, images) {
       .order('sort_order'),
   );
   return data;
+}
+
+export async function listDistinctTags() {
+  const { data } = unwrap(
+    await supabase.from('spots').select('tags').not('tags', 'is', null)
+  );
+  const tagSet = new Set();
+  (data ?? []).forEach((row) => (row.tags ?? []).forEach((t) => tagSet.add(t)));
+  return [...tagSet].sort();
 }

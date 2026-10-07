@@ -22,7 +22,19 @@ export async function processImage(buffer) {
       .webp({ quality: 82 })
       .toBuffer({ resolveWithObject: true });
 
-    return { buffer: data, width: info.width, height: info.height, size: info.size };
+    const thumb = await sharp(buffer, { limitInputPixels: 50_000_000, failOn: 'error' })
+      .rotate()
+      .resize({ width: 400, height: 400, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer({ resolveWithObject: true });
+
+    return {
+      buffer: data,
+      thumbBuffer: thumb.data,
+      width: info.width,
+      height: info.height,
+      size: info.size,
+    };
   } catch (error) {
     if (error instanceof HttpError) throw error;
     throw new HttpError(400, 'That file could not be read as an image.', { code: 'INVALID_IMAGE', cause: error });

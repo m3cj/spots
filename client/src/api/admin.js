@@ -140,6 +140,13 @@ export function deleteEvent(id) {
   );
 }
 
+export function getAdminTags({ signal } = {}) {
+  return withMockFallback(
+    () => http.get('/admin/spots/tags', { signal }),
+    () => mock.adminListTags(),
+  );
+}
+
 // --- submission triage (super_admin only) ---------------------------------------
 
 export function getAdminSubmissions(params, { signal } = {}) {
@@ -156,14 +163,21 @@ export function getAdminSubmission(id, { signal } = {}) {
   );
 }
 
-export function rejectSubmission(id) {
+export function updateAdminSubmission(id, patch) {
   return withMockFallback(
-    () => http.put(`/admin/submissions/${id}`, { status: 'rejected' }),
-    () => mock.reviewSubmission(Number(id), { status: 'rejected' }),
+    () => http.patch(`/admin/submissions/${id}`, patch),
+    () => mock.adminUpdateSubmission(Number(id), patch),
   );
 }
 
-/** Approves a suggestion, creating a draft spot seeded from it plus any enrichment in `spotOverrides`. */
+export function rejectSubmission(id, reason) {
+  return withMockFallback(
+    () => http.put(`/admin/submissions/${id}`, { status: 'rejected', reason: reason || undefined }),
+    () => mock.reviewSubmission(Number(id), { status: 'rejected', reason: reason || undefined }),
+  );
+}
+
+/** Approves a suggestion, creating a spot seeded from it plus any enrichment in `spotOverrides`. */
 export function approveSubmission(id, spotOverrides) {
   return withMockFallback(
     () => http.put(`/admin/submissions/${id}`, { status: 'approved', spot: spotOverrides }),

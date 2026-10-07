@@ -11,7 +11,7 @@ router.post('/', imageUpload.single('file'), async (req, res) => {
   if (!req.file) throw new HttpError(400, 'Attach an image in the "file" field.', { code: 'NO_FILE' });
 
   const image = await processImage(req.file.buffer);
-  const stored = await uploadImage(image.buffer, 'admin');
+  const stored = await uploadImage(image.buffer, 'admin', image.thumbBuffer);
 
   res.status(201).json({ ...stored, width: image.width, height: image.height, size: image.size, mime: 'image/webp' });
 });

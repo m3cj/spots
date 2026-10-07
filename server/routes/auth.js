@@ -108,4 +108,13 @@ router.get('/me', publicLimiter, optionalAuth, async (req, res) => {
   res.json(user);
 });
 
+if (!config.isProd) {
+  router.post('/dev-login', async (_req, res) => {
+    const user = await getUserById(1);
+    if (!user) throw new HttpError(404, 'No dev user found');
+    setSessionCookies(res, user.id);
+    res.json(user);
+  });
+}
+
 export default router;

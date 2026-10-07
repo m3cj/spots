@@ -99,6 +99,7 @@ export const spotListQuery = z.object({
   ...pagination,
   q: optional(z.string().trim().max(100)),
   category: optional(slug),
+  city: optional(z.string().trim().max(80)),
   area: optional(z.string().trim().max(80)),
   pincode: optional(z.string().trim().regex(/^\d{6}$/, 'Pincode must be 6 digits')),
   time: optional(z.enum(BEST_TIMES)),
@@ -137,6 +138,12 @@ export const submissionSchema = z.object({
   lng: longitude,
   description: text(2000, 10),
   best_time_to_visit: z.enum(BEST_TIMES),
+  street: nullableText(160).optional(),
+  landmark: nullableText(120).optional(),
+  area: nullableText(80).optional(),
+  city: optional(z.string().trim().max(80)),
+  state: optional(z.string().trim().max(60)),
+  pincode: z.preprocess(blankToNull, z.string().trim().regex(/^\d{6}$/, 'Pincode must be 6 digits').nullable()).optional(),
 });
 
 // --- admin: spots ----------------------------------------------------------
@@ -154,7 +161,9 @@ const spotShape = {
   tags,
   best_time_to_visit: z.enum(BEST_TIMES),
   street: nullableText(160),
+  landmark: nullableText(120),
   area: nullableText(80),
+  city: text(80),
   pincode: z.preprocess(blankToNull, z.string().trim().regex(/^\d{6}$/, 'Pincode must be 6 digits').nullable()),
   state: text(60),
   contacts: nullableText(200),
@@ -164,6 +173,7 @@ export const spotCreateSchema = z.object({
   ...spotShape,
   status: spotShape.status.default('draft'),
   best_time_to_visit: spotShape.best_time_to_visit.default('anytime'),
+  city: spotShape.city.default('Patna'),
   state: spotShape.state.default('Bihar'),
   tags: spotShape.tags.default([]),
   hero_img: spotShape.hero_img.optional(),
@@ -171,6 +181,7 @@ export const spotCreateSchema = z.object({
   description: spotShape.description.optional(),
   direction: spotShape.direction.optional(),
   street: spotShape.street.optional(),
+  landmark: spotShape.landmark.optional(),
   area: spotShape.area.optional(),
   pincode: spotShape.pincode.optional(),
   contacts: spotShape.contacts.optional(),
@@ -178,8 +189,11 @@ export const spotCreateSchema = z.object({
 
 export const spotUpdateSchema = z.object(spotShape).partial().refine(nonEmptyPatch, 'Nothing to update');
 
-/** Fields an admin may adjust while approving a submission; the new spot always starts as a draft. */
-export const spotOverridesSchema = z.object(spotShape).omit({ status: true }).partial();
+/** Fields an admin may adjust while approving a submission. */
+export const spotOverridesSchema = z.object({
+  ...spotShape,
+  status: spotShape.status.optional(),
+}).partial();
 
 export const spotImagesSchema = z.object({
   images: z
@@ -192,6 +206,7 @@ export const adminSpotListQuery = z.object({
   q: optional(z.string().trim().max(100)),
   status: optional(z.enum(SPOT_STATUSES)),
   category: optional(slug),
+  city: optional(z.string().trim().max(80)),
 });
 
 // --- admin: categories -----------------------------------------------------
@@ -225,6 +240,7 @@ const eventDate = z
   .refine((value) => new Date(`${value}T00:00:00Z`).toISOString().startsWith(value), 'Not a real date');
 
 const startTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, 'Use HH:MM (24-hour)');
+const endTime = z.preprocess(blankToNull, z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, 'Use HH:MM (24-hour)').nullable());
 
 // Stored as a comma-separated string, as in the schema; accepts an array too.
 const categoriesCsv = z
@@ -239,6 +255,7 @@ const eventShape = {
   spot_id: z.coerce.number().int().positive(),
   event_date: eventDate,
   start_time: startTime,
+  end_time: endTime.optional(),
   categories: categoriesCsv,
   status: z.enum(EVENT_STATUSES),
   age_limit: z.preprocess(blankToNull, z.coerce.number().int().min(0).max(120).nullable()),
@@ -281,7 +298,7 @@ export const adminSubmissionListQuery = z.object({
 });
 
 export const submissionReviewSchema = z.discriminatedUnion('status', [
-  z.object({ status: z.literal('rejected') }),
+  z.object({ status: z.literal('rejected'), reason: nullableText(300).optional() }),
   z.object({ status: z.literal('approved'), spot: spotOverridesSchema.optional() }),
 ]);
 

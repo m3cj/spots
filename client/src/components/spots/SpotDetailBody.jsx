@@ -1,10 +1,10 @@
-import { PiClock, PiEye, PiHeartFill, PiMapPin, PiPhone } from 'react-icons/pi';
+import { PiArrowSquareOut, PiClock, PiEye, PiHeartFill, PiMapPin, PiPhone } from 'react-icons/pi';
 import CategoryBadge from '@/components/spots/CategoryBadge';
 import { SpotActionBar } from '@/components/spots/SpotActions';
 import SpotGallery from '@/components/spots/SpotGallery';
 import Pill from '@/components/ui/Pill';
 import { bestTimeLabel } from '@/utils/format';
-import { formatAddress } from '@/utils/maps';
+import { directionsUrl, formatAddress } from '@/utils/maps';
 
 // Hero first, then the curated gallery, without repeating the hero if it is also a gallery row.
 function galleryImages(spot) {
@@ -73,6 +73,18 @@ export default function SpotDetailBody({ spot, category, detail, variant = 'moda
             </li>
           )}
         </ul>
+
+        <div className="pt-1">
+          <a
+            href={directionsUrl(spot)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press inline-flex items-center gap-2 rounded-pill border border-mithila-border bg-mithila-card px-4 py-2 text-button font-semibold text-mithila-primary shadow-sm hover:border-mithila-primary/60 hover:bg-mithila-pill/40 transition-colors"
+          >
+            <PiArrowSquareOut aria-hidden="true" className="h-4 w-4" />
+            <span>Open in Google Maps</span>
+          </a>
+        </div>
       </div>
 
       <SpotActionBar

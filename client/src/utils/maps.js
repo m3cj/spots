@@ -9,5 +9,6 @@ export function directionsUrl(spot) {
 }
 
 export function formatAddress(spot) {
-  return [spot.street, spot.area, spot.pincode, spot.state].filter(Boolean).join(', ');
+  if (!spot) return '';
+  return [spot.street, spot.landmark, spot.area, spot.city, spot.state, spot.pincode].filter(Boolean).join(', ');
 }

@@ -14,6 +14,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { useCategories } from '@/hooks/useCategories';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/hooks/useToast';
+import { useSeo } from '@/hooks/useSeo';
 import { PATNA_CENTER, PATNA_ZOOM } from '@/utils/maps';
 
 const MAP_KEY = 'patna';
@@ -60,11 +61,11 @@ function PinSkeletons() {
       {SKELETON_PINS.map(([left, top], index) => (
         <svg
           key={left + top}
-          viewBox="0 0 32 42"
+          viewBox="0 0 32 44"
           style={{ left, top, animationDelay: `${index * 120}ms` }}
-          className="absolute h-[42px] w-8 fill-mithila-pill motion-safe:animate-pulse"
+          className="absolute h-[44px] w-8 fill-mithila-pill motion-safe:animate-pulse"
         >
-          <path d="M16 1C7.7 1 1 7.6 1 15.8 1 26.4 16 41 16 41s15-14.6 15-25.2C31 7.6 24.3 1 16 1Z" />
+          <path d="M 14.4 42.5 L 14.4 30.41 A 14.5 14.5 0 1 1 17.6 30.41 L 17.6 42.5 A 1.6 1.6 0 0 1 14.4 42.5 Z" />
         </svg>
       ))}
     </div>
@@ -171,22 +172,26 @@ function MapScreen({ spots, loading, error, onRetry }) {
         onClick={() => setSelectedId(null)}
         className="h-full w-full"
       >
-        {visible.map((spot, index) => (
-          <AdvancedMarker
-            key={spot.id}
-            position={spot}
-            title={spot.name}
-            zIndex={spot.id === selectedId ? 1000 : undefined}
-            onClick={() => select(spot)}
-          >
-            <DropletPin
-              color={bySlug.get(spot.category_slug)?.color}
-              selected={spot.id === selectedId}
-              delay={Math.min(index * 0.03, 0.6)}
-              label={spot.name}
-            />
-          </AdvancedMarker>
-        ))}
+        {visible.map((spot, index) => {
+          const category = bySlug.get(spot.category_slug);
+          return (
+            <AdvancedMarker
+              key={spot.id}
+              position={spot}
+              title={spot.name}
+              zIndex={spot.id === selectedId ? 1000 : undefined}
+              onClick={() => select(spot)}
+            >
+              <DropletPin
+                color={category?.color}
+                icon={category?.icon}
+                selected={spot.id === selectedId}
+                delay={Math.min(index * 0.03, 0.6)}
+                label={spot.name}
+              />
+            </AdvancedMarker>
+          );
+        })}
 
         {userPosition && (
           <AdvancedMarker position={userPosition} title="Your location">
@@ -233,7 +238,10 @@ function MapScreen({ spots, loading, error, onRetry }) {
 
 export default function MapPage() {
   const { data, error, loading, reload } = useAsync(loadAllSpots, []);
-
+  useSeo({
+    title: 'Map',
+    description: 'Explore spots in Patna on an interactive map. Filter by category and tap any pin to see details.',
+  });
   return (
     // Fills the viewport between the top edge and the bottom nav (the nav height is 0 on desktop).
     <div className="relative h-[calc(100dvh-var(--bottom-nav-total))] overflow-hidden bg-mithila-pill">

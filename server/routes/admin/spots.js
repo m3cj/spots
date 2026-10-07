@@ -5,6 +5,7 @@ import {
   adminGetSpot,
   adminListSpots,
   adminUpdateSpot,
+  listDistinctTags,
   replaceSpotImages,
 } from '../../db/spots.js';
 import { HttpError, notFound } from '../../utils/HttpError.js';
@@ -41,6 +42,10 @@ function assertPublishable(next, patch, previous = null) {
 router.get('/', async (req, res) => {
   const query = adminSpotListQuery.parse(req.query);
   res.json(await adminListSpots({ ...query, ownerId: isSuperAdmin(req) ? undefined : req.user.id }));
+});
+
+router.get('/tags', async (_req, res) => {
+  res.json(await listDistinctTags());
 });
 
 router.get('/:id', async (req, res) => {

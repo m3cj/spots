@@ -1,3 +1,6 @@
+import { isValidElement } from 'react';
+import Button from '@/components/ui/Button';
+
 // Hand-drawn folk marginalia — DESIGN-SYSTEM §8.12. Strokes use currentColor (--text-tertiary), kept
 // loose and slightly uneven on purpose so they read as notebook doodles, not polished vector art.
 const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' };
@@ -45,6 +48,19 @@ const ILLUSTRATIONS = { lotus: Lotus, compass: Compass, map: MapDoodle };
 export default function EmptyState({ illustration = 'lotus', title, description, action, className = '' }) {
   const Illustration = ILLUSTRATIONS[illustration] ?? Lotus;
 
+  const actionContent = isValidElement(action)
+    ? action
+    : action?.label
+      ? (() => {
+          const { label, as: Component, ...rest } = action;
+          return (
+            <Button as={Component} variant="secondary" {...rest}>
+              {label}
+            </Button>
+          );
+        })()
+      : null;
+
   return (
     <div className={`flex flex-col items-center justify-center px-edge py-12 text-center ${className}`}>
       <svg aria-hidden="true" viewBox="0 0 120 120" className="h-[120px] w-[120px] text-mithila-muted opacity-70">
@@ -52,7 +68,7 @@ export default function EmptyState({ illustration = 'lotus', title, description,
       </svg>
       <h2 className="mt-4 text-[16px] font-semibold text-mithila-text">{title}</h2>
       {description && <p className="mt-1 max-w-xs text-[13px] text-mithila-muted">{description}</p>}
-      {action && <div className="mt-5">{action}</div>}
+      {actionContent && <div className="mt-5">{actionContent}</div>}
     </div>
   );
 }

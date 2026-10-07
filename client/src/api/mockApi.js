@@ -88,10 +88,11 @@ export function listCategories() {
 }
 
 export function listSpots(params) {
-  const { q, category, area, pincode, time, sort = 'newest' } = params;
+  const { q, category, city, area, pincode, time, sort = 'newest' } = params;
   let items = store().spots.filter((spot) => spot.status === 'active');
 
   if (category) items = items.filter((spot) => spot.category_slug === category);
+  if (city) items = items.filter((spot) => (spot.city ?? 'Patna').toLowerCase() === city.toLowerCase());
   if (area) items = items.filter((spot) => spot.area?.toLowerCase() === area.toLowerCase());
   if (pincode) items = items.filter((spot) => spot.pincode === pincode);
   if (time) items = items.filter((spot) => spot.best_time_to_visit === time || spot.best_time_to_visit === 'anytime');
@@ -120,9 +121,20 @@ export function getHotSpots() {
 
 export function getSpotFacets() {
   const active = store().spots.filter((spot) => spot.status === 'active');
+  const cities = [...new Set(active.map((spot) => spot.city ?? 'Patna').filter(Boolean))].sort();
+  const by_city = {};
+  for (const c of cities) {
+    const cSpots = active.filter((spot) => (spot.city ?? 'Patna') === c);
+    by_city[c] = {
+      areas: [...new Set(cSpots.map((spot) => spot.area).filter(Boolean))].sort(),
+      pincodes: [...new Set(cSpots.map((spot) => spot.pincode).filter(Boolean))].sort(),
+    };
+  }
   return {
+    cities,
     areas: [...new Set(active.map((spot) => spot.area).filter(Boolean))].sort(),
     pincodes: [...new Set(active.map((spot) => spot.pincode).filter(Boolean))].sort(),
+    by_city,
   };
 }
 
@@ -468,6 +480,7 @@ export function reviewSubmission(id, review) {
 
   if (review.status === 'rejected') {
     submission.status = 'rejected';
+    submission.reject_reason = review.reason ?? null;
     submission.updated_at = new Date().toISOString();
     return { submission: clone(submission), spot: null };
   }
@@ -476,6 +489,20 @@ export function reviewSubmission(id, review) {
   submission.updated_at = new Date().toISOString();
   const spot = adminCreateSpotFromSubmission(submission, review.spot);
   return { submission: clone(submission), spot };
+}
+
+export function adminUpdateSubmission(id, patch) {
+  requireRole('super_admin');
+  const submission = store().submissions.find((item) => item.id === id);
+  if (!submission) throw notFound('Suggestion');
+  Object.assign(submission, patch, { updated_at: new Date().toISOString() });
+  return clone(submission);
+}
+
+export function adminListTags() {
+  const set = new Set();
+  store().spots.forEach((spot) => (spot.tags ?? []).forEach((t) => set.add(t)));
+  return [...set].sort();
 }
 
 function adminCreateSpotFromSubmission(submission, overrides = {}) {

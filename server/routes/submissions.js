@@ -33,7 +33,7 @@ router.post('/', writeLimiter, requireAuth, imageUpload.single('image'), async (
   let uploaded = null;
   if (req.file) {
     const image = await processImage(req.file.buffer);
-    uploaded = await uploadImage(image.buffer, 'submissions');
+    uploaded = await uploadImage(image.buffer, 'submissions', image.thumbBuffer);
   }
 
   try {

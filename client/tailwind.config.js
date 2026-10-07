@@ -15,6 +15,7 @@ export default {
       white: '#FFFFFF',
       mithila: {
         bg: 'var(--bg-canvas)',
+        canvas: 'var(--bg-canvas)',
         card: 'var(--surface-card)',
         pill: 'var(--surface-pill)',
         border: 'var(--border-subtle)',

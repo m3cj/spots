@@ -33,7 +33,7 @@ export default function EventCard({ event, categories = [], priority = false }) 
       </div>
 
       <p className="bg-mithila-pill px-4 py-2 text-[12px] font-semibold leading-none text-mithila-text">
-        {formatEventWhen(event.event_date, event.start_time)}
+        {formatEventWhen(event.event_date, event.start_time, event.end_time)}
       </p>
 
       <div className="space-y-2 p-4">
